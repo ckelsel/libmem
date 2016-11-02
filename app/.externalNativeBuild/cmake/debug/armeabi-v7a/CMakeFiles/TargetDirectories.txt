@@ -1,4 +1,0 @@
-C:/Users/ckelsel/Downloads/hello-jniCallback/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/nginx.dir
-C:/Users/ckelsel/Downloads/hello-jniCallback/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/hello-jnicallback.dir
-C:/Users/ckelsel/Downloads/hello-jniCallback/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/edit_cache.dir
-C:/Users/ckelsel/Downloads/hello-jniCallback/app/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/rebuild_cache.dir
