@@ -52,7 +52,7 @@ void *__spice_malloc(int n_bytes, char *func, int line)
 #define SIZE_100K (SIZE_1K * 100)
 #define SIZE_200K (SIZE_1K * 200)
 
-#define MALLOC_SIZE SIZE_1K
+#define MALLOC_SIZE (SIZE_1K * SIZE_1K)
 
 #define POOL_SIZE SIZE_512
 
@@ -82,7 +82,7 @@ int test_malloc()
         LOGE("ngx_log_init failed, prefix = %s", prefix);
         return -1;
     }
-    log->log_level = NGX_LOG_DEBUG_ALL;
+    log->log_level = NGX_LOG_INFO;
     ngx_create_dir("/data/logs", 0777);
 
     /*
@@ -131,7 +131,7 @@ int test_malloc()
         return -1;
     }
 
-    printf("here pid %d\n", getpid());
+    LOGI("pid %d\n", getpid());
     ngx_pool_t *pool = cycle->pool;
     if (pool == NULL)
     {
@@ -139,27 +139,25 @@ int test_malloc()
         return -1;
     }
 
-    while ( 1 )
+    int loop = 300;
+
+    LOGI("Enter Main Loop %d", loop);
+    while ( --loop > 0 )
     {
+        LOGI("Enter Loop %d", loop);
         for ( i = 0; i < ARRAY_MAX; i++ )
         {
-            LOGI("alloc %d", i);
-            d[i] = ngx_palloc(pool, MALLOC_SIZE + i * 100);
-            if (d[i] == NULL)
-            {
-                LOGE("ngx_palloc null\n");
-                return -1;
-            }
+            d[i] = ngx_palloc(pool, rand() / MALLOC_SIZE);
         }
 
         for ( i = 0; i < ARRAY_MAX; i++ )
         {
-            LOGI("free %d", i);
             ngx_pfree(pool, d[i]);
         }
-
-        break;
+        LOGI("Leave Loop %d", loop);
     }
+    LOGI("Leave Main Loop %d", loop);
+
     ngx_destroy_pool(pool);
     return 0;
 }

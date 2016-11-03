@@ -131,12 +131,12 @@ typedef u_short  in_port_t;
 
 
 #ifndef NGX_HAVE_POSIX_MEMALIGN
-#define NGX_HAVE_POSIX_MEMALIGN  0
+#define NGX_HAVE_POSIX_MEMALIGN  1
 #endif
 
 
 #ifndef NGX_HAVE_MEMALIGN
-#define NGX_HAVE_MEMALIGN  0
+#define NGX_HAVE_MEMALIGN  1
 #endif
 
 
