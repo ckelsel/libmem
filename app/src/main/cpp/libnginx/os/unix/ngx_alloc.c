@@ -25,11 +25,32 @@ ngx_alloc(size_t size, ngx_log_t *log)
                       "malloc(%uz) failed", size);
     }
 
+#if (ENABLE_NGX_ALLOC_LOG)
     ngx_log_debug2(NGX_LOG_DEBUG_ALLOC, log, 0, "malloc: %p:%uz", p, size);
+#endif
 
     return p;
 }
 
+#if (ENABLE_REALLOC)
+void *
+ngx_realloc(void *p, size_t size, ngx_log_t *log)
+{
+    void *p2;
+
+    p2 = realloc(p, size);
+    if (p2 == NULL && size != 0) {
+        ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
+                        "realloc (%uz) failed", size);
+    }
+
+#if (ENABLE_NGX_ALLOC_LOG)
+    ngx_log_debug2(NGX_LOG_DEBUG_ALLOC, log, 0, "realloc: %p:%uz", p, size);
+#endif
+
+    return p2;
+}
+#endif
 
 void *
 ngx_calloc(size_t size, ngx_log_t *log)
@@ -62,8 +83,10 @@ ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
         p = NULL;
     }
 
+#if (ENABLE_NGX_ALLOC_LOG)
     ngx_log_debug3(NGX_LOG_DEBUG_ALLOC, log, 0,
                    "posix_memalign: %p:%uz @%uz", p, size, alignment);
+#endif
 
     return p;
 }

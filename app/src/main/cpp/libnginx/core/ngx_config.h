@@ -43,6 +43,13 @@
 
 #endif
 
+#ifndef ENABLE_REALLOC
+#define ENABLE_REALLOC 1
+#endif
+
+#ifndef ENABLE_NGX_ALLOC_LOG
+#define ENABLE_NGX_ALLOC_LOG 0
+#endif
 
 #ifndef NGX_HAVE_SO_SNDLOWAT
 #define NGX_HAVE_SO_SNDLOWAT     1

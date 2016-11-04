@@ -11,7 +11,9 @@
 
 static void *ngx_palloc_block(ngx_pool_t *pool, size_t size);
 static void *ngx_palloc_large(ngx_pool_t *pool, size_t size);
-
+#if (ENABLE_REALLOC)
+static void *ngx_prealloc_large(ngx_pool_t *pool, void *mem, size_t size);
+#endif
 
 ngx_pool_t *
 ngx_create_pool(size_t size, ngx_log_t *log)
@@ -115,15 +117,22 @@ ngx_reset_pool(ngx_pool_t *pool)
     pool->large = NULL;
 }
 
-
+#if (ENABLE_REALLOC)
+void *
+__ngx_palloc(ngx_pool_t *pool, size_t size, ngx_int_t internal)
+#else
 void *
 ngx_palloc(ngx_pool_t *pool, size_t size)
+#endif
 {
     u_char      *m;
     ngx_pool_t  *p;
 
+#if (ENABLE_REALLOC)
+    if (internal){
+#else
     if (size <= pool->max) {
-
+#endif
         p = pool->current;
 
         do {
@@ -175,6 +184,25 @@ ngx_pnalloc(ngx_pool_t *pool, size_t size)
     return ngx_palloc_large(pool, size);
 }
 
+#if (ENABLE_REALLOC)
+void *ngx_prealloc(ngx_pool_t *pool, void *mem, size_t size)
+{
+    ngx_pool_large_t  *l;
+
+    if (mem != NULL) {
+        for (l = pool->large; l; l = l->next) {
+            if (mem == l->alloc) {
+                l->alloc =  ngx_realloc(l->alloc, size, pool->log);
+                return l->alloc;
+            }
+        }
+    } else {
+        return ngx_prealloc_large(pool, mem, size);
+    }
+
+    return NULL;
+}
+#endif
 
 static void *
 ngx_palloc_block(ngx_pool_t *pool, size_t size)
@@ -241,7 +269,11 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
         }
     }
 
+#if (ENABLE_REALLOC)
+    large = __ngx_palloc(pool, sizeof(ngx_pool_large_t), 1);
+#else
     large = ngx_palloc(pool, sizeof(ngx_pool_large_t));
+#endif
     if (large == NULL) {
         ngx_free(p);
         return NULL;
@@ -254,6 +286,49 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
     return p;
 }
 
+#if (ENABLE_REALLOC)
+static void *
+ngx_prealloc_large(ngx_pool_t *pool, void *mem, size_t size)
+{
+    void              *p;
+    ngx_uint_t         n;
+    ngx_pool_large_t  *large;
+
+    p = ngx_realloc(mem, size, pool->log);
+    if (p == NULL) {
+        return NULL;
+    }
+
+    n = 0;
+
+    for (large = pool->large; large; large = large->next) {
+        if (large->alloc == NULL) {
+            large->alloc = p;
+            return p;
+        }
+
+        if (n++ > 3) {
+            break;
+        }
+    }
+
+#if (ENABLE_REALLOC)
+    large = __ngx_palloc(pool, sizeof(ngx_pool_large_t), 1);
+#else
+    large = ngx_palloc(pool, sizeof(ngx_pool_large_t));
+#endif
+    if (large == NULL) {
+        ngx_free(p);
+        return NULL;
+    }
+
+    large->alloc = p;
+    large->next = pool->large;
+    pool->large = large;
+
+    return p;
+}
+#endif
 
 void *
 ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment)
@@ -266,7 +341,11 @@ ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment)
         return NULL;
     }
 
+#if (ENABLE_REALLOC)
+    large = __ngx_palloc(pool, sizeof(ngx_pool_large_t), 1);
+#else
     large = ngx_palloc(pool, sizeof(ngx_pool_large_t));
+#endif
     if (large == NULL) {
         ngx_free(p);
         return NULL;
@@ -286,11 +365,11 @@ ngx_pfree(ngx_pool_t *pool, void *p)
     ngx_pool_large_t  *l;
 
     for (l = pool->large; l; l = l->next) {
-        ngx_log_debug2(NGX_LOG_DEBUG_ALLOC, pool->log, 0,
-                       "p: %p, l->alloc %p", p, l->alloc);
         if (p == l->alloc) {
+#if (ENABLE_NGX_ALLOC_LOG)
             ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0,
                            "free: %p", l->alloc);
+#endif
             ngx_free(l->alloc);
             l->alloc = NULL;
 
@@ -307,7 +386,11 @@ ngx_pcalloc(ngx_pool_t *pool, size_t size)
 {
     void *p;
 
+#if (ENABLE_REALLOC)
+    p = __ngx_palloc(pool, size, 1);
+#else
     p = ngx_palloc(pool, size);
+#endif
     if (p) {
         ngx_memzero(p, size);
     }
@@ -321,13 +404,21 @@ ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
 {
     ngx_pool_cleanup_t  *c;
 
+#if (ENABLE_REALLOC)
+    c = __ngx_palloc(p, sizeof(ngx_pool_cleanup_t), 1);;
+#else
     c = ngx_palloc(p, sizeof(ngx_pool_cleanup_t));
+#endif
     if (c == NULL) {
         return NULL;
     }
 
     if (size) {
+#if (ENABLE_REALLOC)
+        c->data = __ngx_palloc(p, size, 1);
+#else
         c->data = ngx_palloc(p, size);
+#endif
         if (c->data == NULL) {
             return NULL;
         }

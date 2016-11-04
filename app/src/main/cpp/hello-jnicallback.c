@@ -31,6 +31,8 @@
 
 // Android log function wrappers
 static const char* kTAG = "hello-jniCallback";
+#define LOGD(...) \
+  ((void)__android_log_print(ANDROID_LOG_DEBUG, kTAG, __VA_ARGS__))
 #define LOGI(...) \
   ((void)__android_log_print(ANDROID_LOG_INFO, kTAG, __VA_ARGS__))
 #define LOGW(...) \
@@ -82,7 +84,7 @@ int test_malloc()
         LOGE("ngx_log_init failed, prefix = %s", prefix);
         return -1;
     }
-    log->log_level = NGX_LOG_INFO;
+    log->log_level = NGX_LOG_DEBUG_ALLOC;
     ngx_create_dir("/data/logs", 0777);
 
     /*
@@ -139,19 +141,53 @@ int test_malloc()
         return -1;
     }
 
-    int loop = 300;
+#if (ENABLE_REALLOC)
+    {
+        void *p = ngx_prealloc(pool, NULL, 10);
+        assert(p);
 
+        p = ngx_prealloc(pool, p, 20);
+
+        p = ngx_prealloc(pool, p, 10);
+
+        p = ngx_prealloc(pool, p, 0);
+        assert(!p);
+
+        ngx_pfree(pool, p);
+
+        p = ngx_palloc(pool, 10);
+        assert(p);
+
+        p = ngx_prealloc(pool, p, 10);
+        assert(p);
+
+        ngx_pfree(pool, p);
+    }
+#endif
+
+    int loop = 30;
     LOGI("Enter Main Loop %d", loop);
     while ( --loop > 0 )
     {
         LOGI("Enter Loop %d", loop);
         for ( i = 0; i < ARRAY_MAX; i++ )
         {
-            d[i] = ngx_palloc(pool, rand() / MALLOC_SIZE);
+            d[i] = ngx_palloc(pool, rand() % MALLOC_SIZE);
+            LOGD("[%d] malloc %p", i, d[i]);
         }
+
+
+#if (ENABLE_REALLOC)
+        for ( i = 0; i < ARRAY_MAX; i++ )
+        {
+            d[i] = ngx_prealloc(pool, d[i], rand() % MALLOC_SIZE);
+            LOGD("[%d] realloc %p", i, d[i]);
+        }
+#endif
 
         for ( i = 0; i < ARRAY_MAX; i++ )
         {
+            LOGD("[%d] free %p", i, d[i]);
             ngx_pfree(pool, d[i]);
         }
         LOGI("Leave Loop %d", loop);

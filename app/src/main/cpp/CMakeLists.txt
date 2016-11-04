@@ -63,6 +63,7 @@ SET (SRC ${SRC} libnginx/ngx_modules.c)
 
 
 SET(CMAKE_C_FLAGS " -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -g")
+#SET(CMAKE_C_FLAGS " -pipe  -O2 -W -Wall -Wpointer-arith -Wno-unused-parameter")
 
 INCLUDE_DIRECTORIES(libnginx/core)
 INCLUDE_DIRECTORIES(libnginx/event)

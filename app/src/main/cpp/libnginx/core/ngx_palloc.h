@@ -74,12 +74,21 @@ typedef struct {
 
 void *ngx_alloc(size_t size, ngx_log_t *log);
 void *ngx_calloc(size_t size, ngx_log_t *log);
+#if (ENABLE_REALLOC)
+void *ngx_realloc(void *p, size_t size, ngx_log_t *log);
+#endif
 
 ngx_pool_t *ngx_create_pool(size_t size, ngx_log_t *log);
 void ngx_destroy_pool(ngx_pool_t *pool);
 void ngx_reset_pool(ngx_pool_t *pool);
+#if (ENABLE_REALLOC)
+void *__ngx_palloc(ngx_pool_t *pool, size_t size, ngx_int_t internal);
+#define ngx_palloc(pool, size) __ngx_palloc(pool, size, 0);
 
+void *ngx_prealloc(ngx_pool_t *pool, void *mem, size_t size);
+#else
 void *ngx_palloc(ngx_pool_t *pool, size_t size);
+#endif
 void *ngx_pnalloc(ngx_pool_t *pool, size_t size);
 void *ngx_pcalloc(ngx_pool_t *pool, size_t size);
 void *ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment);
