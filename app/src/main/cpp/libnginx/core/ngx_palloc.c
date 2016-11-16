@@ -49,6 +49,9 @@ ngx_destroy_pool(ngx_pool_t *pool)
     ngx_pool_t          *p, *n;
     ngx_pool_large_t    *l;
     ngx_pool_cleanup_t  *c;
+#if (ENABLE_MEMORY_LEAK_CHECK)
+    int                 total = 0, count = 0;
+#endif
 
     for (c = pool->cleanup; c; c = c->next) {
         if (c->handler) {
@@ -59,14 +62,26 @@ ngx_destroy_pool(ngx_pool_t *pool)
     }
 
     for (l = pool->large; l; l = l->next) {
-
+#if (ENABLE_NGX_ALLOC_LOG)
         ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0, "free: %p", l->alloc);
-
+#endif
+#if (ENABLE_MEMORY_LEAK_CHECK)
+        ++total;
+#endif
         if (l->alloc) {
+#if (ENABLE_MEMORY_LEAK_CHECK)
+            ++count;
+            ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0, "leak: %p", l->alloc);
+#endif
             ngx_free(l->alloc);
         }
     }
 
+#if (ENABLE_MEMORY_LEAK_CHECK)
+    ngx_log_debug2(NGX_LOG_DEBUG_ALLOC, pool->log, 0, "total %d, leak %d", total, count);
+#endif
+
+#if (!ENABLE_MEMORY_LEAK_CHECK)
 #if (NGX_DEBUG)
 
     /*
@@ -83,6 +98,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
         }
     }
 
+#endif
 #endif
 
     for (p = pool, n = pool->d.next; /* void */; p = n, n = n->d.next) {
@@ -387,7 +403,7 @@ ngx_pcalloc(ngx_pool_t *pool, size_t size)
     void *p;
 
 #if (ENABLE_REALLOC)
-    p = __ngx_palloc(pool, size, 1);
+    p = __ngx_palloc(pool, size, 0);
 #else
     p = ngx_palloc(pool, size);
 #endif
@@ -405,7 +421,10 @@ ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
     ngx_pool_cleanup_t  *c;
 
 #if (ENABLE_REALLOC)
-    c = __ngx_palloc(p, sizeof(ngx_pool_cleanup_t), 1);;
+    ngx_log_error(NGX_LOG_EMERG, p->log, 0,
+                  "%s can't not called while defined ENABLE_REALLOC",
+                  __FUNCTION__);
+    ngx_abort();
 #else
     c = ngx_palloc(p, sizeof(ngx_pool_cleanup_t));
 #endif
@@ -414,9 +433,7 @@ ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
     }
 
     if (size) {
-#if (ENABLE_REALLOC)
-        c->data = __ngx_palloc(p, size, 1);
-#else
+#if (!ENABLE_REALLOC)
         c->data = ngx_palloc(p, size);
 #endif
         if (c->data == NULL) {

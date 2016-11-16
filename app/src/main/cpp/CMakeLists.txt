@@ -71,14 +71,133 @@ INCLUDE_DIRECTORIES(libnginx/event/modules)
 INCLUDE_DIRECTORIES(libnginx/os/unix)
 INCLUDE_DIRECTORIES(libnginx/include)
 
+INCLUDE_DIRECTORIES(C:\\Users\\Administrator\\Downloads\\ConverToAndroidStudio\\app\\gstreamer\\include\\glib-2.0)
+INCLUDE_DIRECTORIES(C:\\Users\\Administrator\\Downloads\\ConverToAndroidStudio\\app\\gstreamer\\lib\\glib-2.0\\include)
+
+link_directories(C:\\Users\\Administrator\\Downloads\\ConverToAndroidStudio\\app\\gstreamer\\lib)
+
 add_library(nginx SHARED ${SRC})
 target_link_libraries(nginx android log)
 
 add_library(hello-jnicallback SHARED
-    hello-jnicallback.c )
+    hello-jnicallback.c
+    cache.c)
 
 # Include libraries needed for lib
 target_link_libraries(hello-jnicallback
+
+a52
+ass
+avcodec
+avformat
+avutil
+bz2
+cairo-gobject
+cairo-script-interpreter
+cairo
+charset
+croco-0.6
+dca
+dv
+expat
+faad
+ffi
+FLAC
+fontconfig
+freetype
+fribidi
+gcrypt
+gdk_pixbuf-2.0
+ges-1.0
+gio-2.0
+glib-2.0
+gmodule-2.0
+gmp
+gnustl
+gnutls-openssl
+gnutls
+gobject-2.0
+gpg-error
+gstallocators-1.0
+gstapp-1.0
+gstaudio-1.0
+gstbadbase-1.0
+gstbadvideo-1.0
+gstbase-1.0
+gstbasecamerabinsrc-1.0
+gstcheck-1.0
+gstcodecparsers-1.0
+gstcontroller-1.0
+gstfft-1.0
+gstgl-1.0
+gstinsertbin-1.0
+gstmpegts-1.0
+gstnet-1.0
+gstpbutils-1.0
+gstphotography-1.0
+gstreamer-1.0
+gstriff-1.0
+gstrtp-1.0
+gstrtsp-1.0
+gstrtspserver-1.0
+gstsdp-1.0
+gsttag-1.0
+gsturidownloader-1.0
+gstvalidate-1.0
+gstvideo-1.0
+gthread-2.0
+harfbuzz
+hogweed
+iconv
+intl
+jpeg
+kate
+mad
+mms
+mpeg2
+mpeg2convert
+nettle
+ogg
+oggkate
+opencore-amrnb
+opencore-amrwb
+opus
+orc-0.4
+orc-test-0.4
+pango-1.0
+pangocairo-1.0
+pangoft2-1.0
+pixman-1
+png16
+rsvg-2
+rtmp
+schroedinger-1.0
+SoundTouch
+soup-2.4
+speex
+speexdsp
+supc++
+swscale
+tag
+tasn1
+theora
+theoradec
+theoraenc
+tiff
+visual-0.4
+vo-aacenc
+vorbis
+vorbisenc
+vorbisfile
+vorbisidec
+vpx
+wavpack
+x264
+xml2
+z
+
                         nginx
                       android
+                      glib-2.0
+                      iconv
                       log)

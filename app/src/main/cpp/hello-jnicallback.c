@@ -17,7 +17,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <jni.h>
-#include <android/log.h>
 #include <assert.h>
 
 #include <stdio.h>
@@ -27,18 +26,8 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_log.h>
-
-
-// Android log function wrappers
-static const char* kTAG = "hello-jniCallback";
-#define LOGD(...) \
-  ((void)__android_log_print(ANDROID_LOG_DEBUG, kTAG, __VA_ARGS__))
-#define LOGI(...) \
-  ((void)__android_log_print(ANDROID_LOG_INFO, kTAG, __VA_ARGS__))
-#define LOGW(...) \
-  ((void)__android_log_print(ANDROID_LOG_WARN, kTAG, __VA_ARGS__))
-#define LOGE(...) \
-  ((void)__android_log_print(ANDROID_LOG_ERROR, kTAG, __VA_ARGS__))
+#include "debug.h"
+#include "cache.h"
 
 #define spice_malloc(n_bytes) __spice_malloc(n_bytes, __FUNCTION__, __LINE__)
 void *__spice_malloc(int n_bytes, char *func, int line)
@@ -58,7 +47,7 @@ void *__spice_malloc(int n_bytes, char *func, int line)
 
 #define POOL_SIZE SIZE_512
 
-#define ARRAY_MAX   1024
+#define ARRAY_MAX   1524
 int test_malloc()
 {
     void *p = spice_malloc(100);
@@ -170,10 +159,13 @@ int test_malloc()
     while ( --loop > 0 )
     {
         LOGI("Enter Loop %d", loop);
+
         for ( i = 0; i < ARRAY_MAX; i++ )
         {
-            d[i] = ngx_palloc(pool, rand() % MALLOC_SIZE);
+            d[i] = ngx_pcalloc(pool, rand() % MALLOC_SIZE);
             LOGD("[%d] malloc %p", i, d[i]);
+
+            ngx_pfree(pool, d[i]);
         }
 
 
@@ -182,6 +174,8 @@ int test_malloc()
         {
             d[i] = ngx_prealloc(pool, d[i], rand() % MALLOC_SIZE);
             LOGD("[%d] realloc %p", i, d[i]);
+
+            ngx_pfree(pool, d[i]);
         }
 #endif
 
@@ -190,15 +184,31 @@ int test_malloc()
             LOGD("[%d] free %p", i, d[i]);
             ngx_pfree(pool, d[i]);
         }
+
         LOGI("Leave Loop %d", loop);
     }
     LOGI("Leave Main Loop %d", loop);
+
+#if (ENABLE_MEMORY_LEAK_CHECK)
+    {
+        for ( i = 0; i < 2; i++ )
+        {
+            d[i] = ngx_palloc(pool, rand() % MALLOC_SIZE);
+            LOGD("[%d] malloc %p", i, d[i]);
+        }
+    }
+#endif
 
     ngx_destroy_pool(pool);
     return 0;
 }
 
 
+void test()
+{
+    test_hash();
+    //test_malloc();
+}
 
 // processing callback to handler class
 typedef struct tick_context {
@@ -253,7 +263,8 @@ Java_com_example_hellojnicallback_MainActivity_stringFromJNI( JNIEnv* env, jobje
 #define ABI "unknown"
 #endif
 
-    test_malloc();
+
+    test();
 
     return (*env)->NewStringUTF(env, "Hello from JNI !  Compiled with ABI " ABI ".");
 }

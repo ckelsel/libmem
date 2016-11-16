@@ -43,8 +43,17 @@
 
 #endif
 
+/*
+ * If define 'ENABLE_REALLOC' to '1'
+ *  ngx_palloc and ngx_prealloc are not use memory pool any more.
+ *  Only internal use memory pool.
+ */
 #ifndef ENABLE_REALLOC
 #define ENABLE_REALLOC 1
+#endif
+
+#ifndef ENABLE_MEMORY_LEAK_CHECK
+#define ENABLE_MEMORY_LEAK_CHECK 1
 #endif
 
 #ifndef ENABLE_NGX_ALLOC_LOG
